@@ -37,20 +37,6 @@ var polls = []*Poll{
 	{ID: 3, Title: "Favorite Food", Slug: "favorite-food"},
 }
 
-// PollRouter mount the routes used for the poll resource
-func PollRouter() http.Handler {
-	r := chi.NewRouter()
-	r.Get("/", ListPolls)
-	r.Post("/", CreatePoll)
-	r.Route("/{id:[0-9]+}", func(r chi.Router) {
-		r.Get("/", SinglePoll)
-		r.Put("/", UpdatePoll)
-		r.Patch("/", UpdatePoll)
-		r.Delete("/", DeletePoll)
-	})
-	return r
-}
-
 // ListPolls appends multiple PollResponse into a list and render them as JSON
 func ListPolls(w http.ResponseWriter, r *http.Request) {
 	list := []render.Renderer{}
