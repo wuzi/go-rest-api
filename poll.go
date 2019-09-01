@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/rand"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -40,6 +41,7 @@ func PollRouter() http.Handler {
 	r := chi.NewRouter()
 	r.Get("/", ListPolls)
 	r.Post("/", CreatePoll)
+	r.Get("/{id:[0-9]+}", SinglePoll)
 	return r
 }
 
@@ -69,6 +71,24 @@ func CreatePoll(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusCreated)
 	render.Render(w, r, &PollResponse{Poll: poll})
+}
+
+// SinglePoll gets a single poll from polls list
+func SinglePoll(w http.ResponseWriter, r *http.Request) {
+	foundPoll := false
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	for _, poll := range polls {
+		if poll.ID == id {
+			foundPoll = true
+			render.Render(w, r, &PollResponse{Poll: poll})
+			break
+		}
+	}
+
+	if !foundPoll {
+		render.Render(w, r, ErrNotFound)
+	}
+	return
 }
 
 // Render do a pre-processing before a response is marshalled and sent across the wire
