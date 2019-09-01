@@ -43,6 +43,8 @@ func PollRouter() http.Handler {
 	r.Post("/", CreatePoll)
 	r.Route("/{id:[0-9]+}", func(r chi.Router) {
 		r.Get("/", SinglePoll)
+		r.Put("/", UpdatePoll)
+		r.Patch("/", UpdatePoll)
 		r.Delete("/", DeletePoll)
 	})
 	return r
@@ -84,6 +86,41 @@ func SinglePoll(w http.ResponseWriter, r *http.Request) {
 		if poll.ID == id {
 			foundPoll = true
 			render.Render(w, r, &PollResponse{Poll: poll})
+			break
+		}
+	}
+
+	if !foundPoll {
+		render.Render(w, r, ErrNotFound)
+	}
+	return
+}
+
+// UpdatePoll updates a poll in the polls list by id
+func UpdatePoll(w http.ResponseWriter, r *http.Request) {
+	foundPoll := false
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	for i, poll := range polls {
+		if poll.ID == id {
+			foundPoll = true
+
+			data := &PollRequest{}
+			if err := render.Bind(r, data); err != nil {
+				render.Render(w, r, ErrInvalidRequest(err))
+				return
+			}
+
+			if r.Method == "PUT" {
+				polls[i] = data.Poll
+			} else if r.Method == "PATCH" {
+				if data.Poll.Title != "" {
+					polls[i].Title = data.Poll.Title
+				}
+				if data.Poll.Slug != "" {
+					polls[i].Slug = data.Poll.Slug
+				}
+			}
+			render.Render(w, r, &PollResponse{Poll: polls[i]})
 			break
 		}
 	}
