@@ -41,7 +41,10 @@ func PollRouter() http.Handler {
 	r := chi.NewRouter()
 	r.Get("/", ListPolls)
 	r.Post("/", CreatePoll)
-	r.Get("/{id:[0-9]+}", SinglePoll)
+	r.Route("/{id:[0-9]+}", func(r chi.Router) {
+		r.Get("/", SinglePoll)
+		r.Delete("/", DeletePoll)
+	})
 	return r
 }
 
@@ -81,6 +84,25 @@ func SinglePoll(w http.ResponseWriter, r *http.Request) {
 		if poll.ID == id {
 			foundPoll = true
 			render.Render(w, r, &PollResponse{Poll: poll})
+			break
+		}
+	}
+
+	if !foundPoll {
+		render.Render(w, r, ErrNotFound)
+	}
+	return
+}
+
+// DeletePoll removes a poll from the polls list by id
+func DeletePoll(w http.ResponseWriter, r *http.Request) {
+	foundPoll := false
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	for i, poll := range polls {
+		if poll.ID == id {
+			foundPoll = true
+			polls = polls[:i+copy(polls[i:], polls[i+1:])]
+			render.Render(w, r, &ErrResponse{HTTPStatusCode: 204})
 			break
 		}
 	}
