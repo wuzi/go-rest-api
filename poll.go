@@ -24,7 +24,8 @@ type PollResponse struct {
 
 // PollRequest is the struct of the request of polls
 type PollRequest struct {
-	*Poll
+	Title string
+	Slug  string
 }
 
 // polls is a slice with the registered polls
@@ -71,7 +72,7 @@ func CreatePoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	poll := data.Poll
+	poll := &Poll{Title: data.Title, Slug: data.Slug}
 	dbNewPoll(poll)
 
 	render.Status(r, http.StatusCreated)
@@ -111,13 +112,13 @@ func UpdatePoll(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if r.Method == "PUT" {
-				polls[i] = data.Poll
+				polls[i] = &Poll{ID: polls[i].ID, Title: data.Title, Slug: data.Slug}
 			} else if r.Method == "PATCH" {
-				if data.Poll.Title != "" {
-					polls[i].Title = data.Poll.Title
+				if data.Title != "" {
+					polls[i].Title = data.Title
 				}
-				if data.Poll.Slug != "" {
-					polls[i].Slug = data.Poll.Slug
+				if data.Slug != "" {
+					polls[i].Slug = data.Slug
 				}
 			}
 			render.Render(w, r, &PollResponse{Poll: polls[i]})
@@ -157,8 +158,8 @@ func (rd *PollResponse) Render(w http.ResponseWriter, r *http.Request) error {
 
 // Bind validates the poll request
 func (rd *PollRequest) Bind(r *http.Request) error {
-	if rd.Poll == nil {
-		return errors.New("missing fields")
+	if rd == nil || rd.Title == "" || rd.Slug == "" {
+		return errors.New("missing required fields")
 	}
 	return nil
 }
