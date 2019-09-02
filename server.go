@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -12,8 +12,8 @@ type server struct {
 }
 
 func run() error {
-	flag.Parse()
 	server := newServer()
+	fmt.Println("Server started at http://localhost:3333")
 	http.ListenAndServe(":3333", server.router)
 	return nil
 }
