@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 )
 
@@ -17,14 +18,25 @@ func (s *server) routes() {
 	s.router.Use(middleware.URLFormat)
 	s.router.Use(render.SetContentType(render.ContentTypeJSON))
 
-	s.router.Route("/polls", func(rt chi.Router) {
-		rt.Get("/", ListPolls)
-		rt.Post("/", CreatePoll)
-		rt.Route("/{id:[0-9]+}", func(r chi.Router) {
+	token := jwtauth.New("HS256", []byte("a2CmyEmA0m"), nil)
+	s.router.Use(jwtauth.Verifier(token))
+
+	s.router.Route("/polls", func(r chi.Router) {
+		r.Get("/", ListPolls)
+
+		r.Group(func(r chi.Router) {
+			r.Use(jwtauth.Authenticator)
+			r.Post("/", CreatePoll)
+		})
+
+		r.Route("/{id:[0-9]+}", func(r chi.Router) {
 			r.Get("/", SinglePoll)
-			r.Put("/", UpdatePoll)
-			r.Patch("/", UpdatePoll)
-			r.Delete("/", DeletePoll)
+			r.Group(func(r chi.Router) {
+				r.Use(jwtauth.Authenticator)
+				r.Put("/", UpdatePoll)
+				r.Patch("/", UpdatePoll)
+				r.Delete("/", DeletePoll)
+			})
 		})
 	})
 
